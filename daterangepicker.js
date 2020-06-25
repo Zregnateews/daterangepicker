@@ -54,6 +54,7 @@
         this.linkedCalendars = true;
         this.autoUpdateInput = true;
         this.alwaysShowCalendars = false;
+        this.closeOnCancel = false;
         this.ranges = {};
 
         this.opens = 'right';
@@ -246,6 +247,10 @@
             this.singleDatePicker = options.singleDatePicker;
             if (this.singleDatePicker)
                 this.endDate = this.startDate.clone();
+        }
+
+        if (typeof options.closeOnCancel === 'boolean') {
+            this.closeOnCancel = options.closeOnCancel;
         }
 
         if (typeof options.timePicker === 'boolean')
@@ -569,6 +574,16 @@
             }
         },
 
+        updateMinDate: function(date) {
+            this.minDate = date;
+            return false;
+        },
+
+        updateMaxDate: function(date) {
+            this.maxDate = date;
+            return false;
+        },
+
         updateCalendars: function() {
 
             if (this.timePicker) {
@@ -699,7 +714,7 @@
                 html += '<th></th>';
 
             if ((!minDate || minDate.isBefore(calendar.firstDay)) && (!this.linkedCalendars || side == 'left')) {
-                html += '<th class="prev available"><span></span></th>';
+                html += '<th class="prev available prevMonth"><span></span></th>';
             } else {
                 html += '<th></th>';
             }
@@ -741,7 +756,7 @@
 
             html += '<th colspan="5" class="month">' + dateHtml + '</th>';
             if ((!maxDate || maxDate.isAfter(calendar.lastDay)) && (!this.linkedCalendars || side == 'right' || this.singleDatePicker)) {
-                html += '<th class="next available"><span></span></th>';
+                html += '<th class="next available nextMonth"><span></span></th>';
             } else {
                 html += '<th></th>';
             }
@@ -1233,6 +1248,7 @@
             } else {
                 this.rightCalendar.month.subtract(1, 'month');
             }
+            this.element.trigger('prevmonth.daterangepicker', this);
             this.updateCalendars();
         },
 
@@ -1245,6 +1261,7 @@
                 if (this.linkedCalendars)
                     this.leftCalendar.month.add(1, 'month');
             }
+            this.element.trigger('nextmonth.daterangepicker', this);
             this.updateCalendars();
         },
 
@@ -1324,6 +1341,7 @@
                 }
                 this.endDate = null;
                 this.setStartDate(date.clone());
+                this.element.trigger('pickingstart.daterangepicker', this);
             } else if (!this.endDate && date.isBefore(this.startDate)) {
                 //special case: clicking the same date for start/end,
                 //but the time of the end date is before the start date
@@ -1350,6 +1368,7 @@
                   this.calculateChosenLabel();
                   this.clickApply();
                 }
+                this.element.trigger('pickingend.daterangepicker', this);
             }
 
             if (this.singleDatePicker) {
@@ -1405,8 +1424,15 @@
         clickCancel: function(e) {
             this.startDate = this.oldStartDate;
             this.endDate = this.oldEndDate;
-            this.hide();
+            if(this.closeOnCancel){
+                this.hide();
+            }
             this.element.trigger('cancel.daterangepicker', this);
+        },
+
+        resetDates: function(e){
+            this.startDate = moment();
+            this.endDate = moment();
         },
 
         monthOrYearChanged: function(e) {
@@ -1448,6 +1474,7 @@
                 if (this.linkedCalendars)
                     this.leftCalendar.month = this.rightCalendar.month.clone().subtract(1, 'month');
             }
+            this.element.trigger('monthyearchanged.daterangepicker', this);
             this.updateCalendars();
         },
 
